@@ -3,11 +3,15 @@
 ## How to run
 1. Install required packages
 
-    ```npm install```
+    ```bash
+    npm install
+    ```
 
 2. Run the webpack server
 
-    ```npm start```
+    ```bash
+    npm start
+    ```
 
 ## Project Status
 
