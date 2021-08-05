@@ -1,15 +1,15 @@
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register('sw.js')
-      .then(reg => console.log('Service Worker: Registered (Pages)'))
-      .catch(err => console.log(`Service Worker: Error: ${err}`));
+      .register("sw.js")
+      .then((reg) => console.log("Service Worker: Registered (Pages)"))
+      .catch((err) => console.log(`Service Worker: Error: ${err}`));
   });
 }
 
-import './styles/index.scss';
-import * as tf from '@tensorflow/tfjs';
-import yolo from 'tfjs-yolo';
+import "./styles/index.scss";
+import * as tf from "@tensorflow/tfjs";
+import yolo from "tfjs-yolo";
 // import textToSpeech from '@google-cloud/text-to-speech';
 // const fs = require('fs');
 // const util = require('util');
@@ -17,19 +17,19 @@ import yolo from 'tfjs-yolo';
 // import express from 'express';
 
 // var app = express()
- 
+
 // app.use(cors())
 
-const loader = document.getElementById('loader');
-const spinner = document.getElementById('spinner');
-const webcam = document.getElementById('webcam');
-const wrapper = document.getElementById('webcam-wrapper');
-const rects = document.getElementById('rects');
-const v3 = document.getElementById('v3');
-const v1tiny = document.getElementById('v1tiny');
-const v2tiny = document.getElementById('v2tiny');
-const v3tiny = document.getElementById('v3tiny');
-const classes = document.getElementById('classes');
+const loader = document.getElementById("loader");
+const spinner = document.getElementById("spinner");
+const webcam = document.getElementById("webcam");
+const wrapper = document.getElementById("webcam-wrapper");
+const rects = document.getElementById("rects");
+const v3 = document.getElementById("v3");
+const v1tiny = document.getElementById("v1tiny");
+const v2tiny = document.getElementById("v2tiny");
+const v3tiny = document.getElementById("v3tiny");
+const classes = document.getElementById("classes");
 // const client = new textToSpeech.TextToSpeechClient();
 
 let myYolo;
@@ -39,10 +39,10 @@ let selected;
   try {
     await setupWebCam();
 
-    v3.addEventListener('click', () => load(v3));
-    v1tiny.addEventListener('click', () => load(v1tiny));
-    v2tiny.addEventListener('click', () => load(v2tiny));
-    v3tiny.addEventListener('click', () => load(v3tiny));
+    v3.addEventListener("click", () => load(v3));
+    v1tiny.addEventListener("click", () => load(v1tiny));
+    v2tiny.addEventListener("click", () => load(v2tiny));
+    v3tiny.addEventListener("click", () => load(v3tiny));
 
     run();
   } catch (e) {
@@ -53,8 +53,8 @@ let selected;
 async function setupWebCam() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      'audio': false,
-      'video': { facingMode: 'environment' }
+      audio: false,
+      video: { facingMode: "environment" },
     });
     window.stream = stream;
     webcam.srcObject = stream;
@@ -63,7 +63,9 @@ async function setupWebCam() {
 
 async function load(button) {
   if (button == v3) {
-    var r = confirm("Full YOLO inference is slow in browser and may take 30+ seconds to predict one picture. Do you want to continue?");
+    var r = confirm(
+      "Full YOLO inference is slow in browser and may take 30+ seconds to predict one picture. Do you want to continue?"
+    );
     if (!r) {
       return;
     }
@@ -74,9 +76,9 @@ async function load(button) {
     myYolo = null;
   }
 
-  rects.innerHTML = '';
-  loader.style.display = 'block';
-  spinner.style.display = 'block';
+  rects.innerHTML = "";
+  loader.style.display = "block";
+  spinner.style.display = "block";
   setButtons(button);
 
   setTimeout(async () => {
@@ -101,42 +103,43 @@ async function load(button) {
 }
 
 function setButtons(button) {
-  v3.className = '';
-  v1tiny.className = '';
-  v2tiny.className = '';
-  v3tiny.className = '';
-  button.className = 'selected';
+  v3.className = "";
+  v1tiny.className = "";
+  v2tiny.className = "";
+  v3tiny.className = "";
+  button.className = "selected";
   selected = button;
 }
 
 function progress(totalModel) {
   let cnt = 0;
-  Promise.all = (all => {
+  Promise.all = ((all) => {
     return function then(reqs) {
       if (reqs.length === totalModel && cnt < totalModel * 2)
-        reqs.map(req => {
-          return req.then(r => {
-            loader.setAttribute('percent', (++cnt / totalModel * 50).toFixed(1));
+        reqs.map((req) => {
+          return req.then((r) => {
+            loader.setAttribute(
+              "percent",
+              ((++cnt / totalModel) * 50).toFixed(1)
+            );
             if (cnt === totalModel * 2) {
-              loader.style.display = 'none';
-              spinner.style.display = 'none';
-              loader.setAttribute('percent', '0.0');
+              loader.style.display = "none";
+              spinner.style.display = "none";
+              loader.setAttribute("percent", "0.0");
             }
           });
         });
       return all.apply(this, arguments);
-    }
+    };
   })(Promise.all);
 }
 
 async function run() {
   let interval = 1;
   if (myYolo) {
-    let threshold = .3;
-    if (selected == v3tiny)
-      threshold = .2;
-    else if (selected == v3)
-      interval = 1;
+    let threshold = 0.3;
+    if (selected == v3tiny) threshold = 0.2;
+    else if (selected == v3) interval = 1;
     await predict(threshold);
   }
   setTimeout(run, interval * 100);
@@ -156,10 +159,12 @@ async function predict(threshold) {
 }
 
 let colors = {};
+let said = "";
+let detected = [];
 
 async function drawBoxes(boxes) {
   console.log(boxes);
-  rects.innerHTML = '';
+  rects.innerHTML = "";
 
   const cw = webcam.clientWidth;
   const ch = webcam.clientHeight;
@@ -172,34 +177,43 @@ async function drawBoxes(boxes) {
   wrapper.style.width = `${cw}px`;
   wrapper.style.height = `${ch}px`;
 
-  var objects = 'There are ';
+  var objects = "";
 
   boxes.map((box) => {
-    if (!(box['class'] in colors)) {
-      colors[box['class']] = '#' + Math.floor(Math.random() * 16777215).toString(16);
+    if (!(box["class"] in colors)) {
+      colors[box["class"]] =
+        "#" + Math.floor(Math.random() * 16777215).toString(16);
     }
 
-    const rect = document.createElement('div');
-    rect.className = 'rect';
-    rect.style.top = `${box['top'] * scaleH}px`;
-    rect.style.left = `${box['left'] * scaleW}px`;
-    rect.style.width = `${box['width'] * scaleW - 4}px`;
-    rect.style.height = `${box['height'] * scaleH - 4}px`;
-    rect.style.borderColor = colors[box['class']];
-    rect.style.fortSize = 'bolder'
+    const rect = document.createElement("div");
+    rect.className = "rect";
+    rect.style.top = `${box["top"] * scaleH}px`;
+    rect.style.left = `${box["left"] * scaleW}px`;
+    rect.style.width = `${box["width"] * scaleW - 4}px`;
+    rect.style.height = `${box["height"] * scaleH - 4}px`;
+    rect.style.borderColor = colors[box["class"]];
+    rect.style.fortSize = "bolder";
 
-    const text = document.createElement('div');
-    text.className = 'text';
-    text.innerText = `${box['class']} ${box['score'].toFixed(2)}`;
-    text.style.color = colors[box['class']];
+    const text = document.createElement("div");
+    text.className = "text";
+    text.innerText = `${box["class"]} ${box["score"].toFixed(2)}`;
+    text.style.color = colors[box["class"]];
 
-    objects = objects + `${box['class']}, `;
+    objects = objects + `${box["class"]}, `;
 
     rect.appendChild(text);
     rects.appendChild(rect);
   });
   console.log("Detected Objects -->", objects);
-  classes.innerText = objects;
+
+  setTimeout(() => {
+    if (said !== objects) {
+      let speaknow = new SpeechSynthesisUtterance(objects);
+      window.speechSynthesis.speak(speaknow);
+      said = objects;
+      classes.innerText = objects;
+    }
+  }, 500);
   // speak(objects);
 
   // await fetch(`https://texttospeech.googleapis.com/v1beta1/text:${objects}`)
